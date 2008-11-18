@@ -81,9 +81,10 @@ SEE ALSO
 AUTHOR
     Simon Bertrang, <simon.bertrang@puzzworks.com>
 
-COPYRIGHT AND LICENSE
-    Copyright (C) 2008 by PuzzWorks, OHG.
+COPYRIGHT
+    Copyright (c) 2008 PuzzWorks OHG, <http://puzzworks.com/>
 
+LICENSE
     This library is free software; you can redistribute it and/or modify it
     under the same terms as Perl itself.
 

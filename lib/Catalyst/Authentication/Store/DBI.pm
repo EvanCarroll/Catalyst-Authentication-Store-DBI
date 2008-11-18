@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use Catalyst::Authentication::Store::DBI::User;
 
-our $VERSION = '0.00_01';
+our $VERSION = '0.00_02';
 
 =head1 NAME
 

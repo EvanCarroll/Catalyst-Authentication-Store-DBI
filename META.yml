@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:                Catalyst-Authentication-Store-DBI
-version:             0.00_01
+version:             0.00_02
 abstract:            Storage class for Catalyst Authentication using DBI
 license:             perl
 author:              
