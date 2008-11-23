@@ -3,11 +3,12 @@ use strict;
 use warnings;
 use Catalyst::Authentication::Store::DBI::User;
 
-our $VERSION = '0.00_02';
+our $VERSION = '0.01';
 
 =head1 NAME
 
-Catalyst::Authentication::Store::DBI - Storage class for Catalyst Authentication using DBI
+Catalyst::Authentication::Store::DBI - Storage class for Catalyst
+Authentication using DBI
 
 =head1 SYNOPSIS
 
@@ -69,9 +70,11 @@ Catalyst::Authentication::Store::DBI - Storage class for Catalyst Authentication
 
 =head1 DESCRIPTION
 
-This module implements the L<Catalyst::Authentication> API using L<Catalyst::Model::DBI>.
+This module implements the L<Catalyst::Authentication> API using
+L<Catalyst::Model::DBI>.
 
-It uses DBI to let your application authenticate users against a database and it provides support for L<Catalyst::Plugin::Authorization::Roles>.
+It uses DBI to let your application authenticate users against a database and it
+provides support for L<Catalyst::Plugin::Authorization::Roles>.
 
 =head1 METHODS
 
@@ -116,18 +119,21 @@ sub find_user
 
 	my @col = map { $_ } sort(keys(%$authinfo));
 
-	$sql = 'SELECT * FROM ' . $self->{'user_table'} . ' WHERE ' . join(' AND ', map { $_ . ' = ?' } @col);
+	$sql = 'SELECT * FROM ' . $self->{'user_table'} . ' WHERE ' .
+	    join(' AND ', map { $_ . ' = ?' } @col);
 
 	$sth = $dbh->prepare($sql) or die($dbh->errstr());
 	$sth->execute(@$authinfo{@col}) or die($dbh->errstr());
-	$sth->bind_columns(\( @user{ @{ $sth->{'NAME_lc'} } } )) or die($dbh->errstr());
+	$sth->bind_columns(\( @user{ @{ $sth->{'NAME_lc'} } } )) or
+	    die($dbh->errstr());
 	unless ($sth->fetch()) {
 		$sth->finish();
 		return undef;
 	}
 	$sth->finish();
 
-	unless (exists($user{$self->{'user_key'}}) && length($user{$self->{'user_key'}})) {
+	unless (exists($user{$self->{'user_key'}}) &&
+	    length($user{$self->{'user_key'}})) {
 		return undef;
 	}
 
@@ -162,18 +168,21 @@ sub from_session
 
 	my $dbh = $self->{'dbh'};
 
-	$sql = 'SELECT * FROM ' . $self->{'user_table'} . ' WHERE ' . $self->{'user_key'} . ' = ?';
+	$sql = 'SELECT * FROM ' . $self->{'user_table'} . ' WHERE ' .
+	    $self->{'user_key'} . ' = ?';
 
 	$sth = $dbh->prepare($sql) or die($dbh->errstr());
 	$sth->execute($frozen) or die($dbh->errstr());
-	$sth->bind_columns(\( @user{ @{ $sth->{'NAME_lc'} } } )) or die($dbh->errstr());
+	$sth->bind_columns(\( @user{ @{ $sth->{'NAME_lc'} } } )) or
+	    die($dbh->errstr());
 	unless ($sth->fetch()) {
 		$sth->finish();
 		return undef;
 	}
 	$sth->finish();
 
-	unless (exists($user{$self->{'user_key'}}) && length($user{$self->{'user_key'}})) {
+	unless (exists($user{$self->{'user_key'}}) &&
+	    length($user{$self->{'user_key'}})) {
 		return undef;
 	}
 
@@ -214,8 +223,8 @@ Copyright (c) 2008 PuzzWorks OHG, L<http://puzzworks.com/>
 
 =head1 LICENSE
 
-This library is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself.
+This library is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself.
 
 =cut
 

@@ -5,11 +5,13 @@ use base 'Catalyst::Authentication::User';
 
 =head1 NAME
 
-Catalyst::Authentication::Store::DBI::User - User object representing a database record
+Catalyst::Authentication::Store::DBI::User - User object representing a
+database record
 
 =head1 DESCRIPTION
 
-This class represents users found in the database and implements methods to access the contained information.
+This class represents users found in the database and implements methods to
+access the contained information.
 
 =head1 METHODS
 
@@ -123,11 +125,13 @@ sub roles
 		'user_role_table', 'user_role_user_key',
 	);
 
-	my $sql = sprintf('SELECT %s.%s FROM %s INNER JOIN %s ON %s.%s = %s.%s WHERE %s.%s = ?',
+	my $sql = sprintf('SELECT %s.%s FROM %s' .
+	    ' INNER JOIN %s ON %s.%s = %s.%s WHERE %s.%s = ?',
 	    map { $dbh->quote_identifier($store->{$_}) } @field);
 
 	$sth = $dbh->prepare($sql) or die($dbh->errstr());
-	$sth->execute($self->{'user'}{$store->{'user_key'}}) or die($dbh->errstr());
+	$sth->execute($self->{'user'}{$store->{'user_key'}}) or
+	    die($dbh->errstr());
 	$sth->bind_columns(\$role) or die($dbh->errstr());
 	while ($sth->fetch()) {
 		push(@{$self->{'roles'}}, $role);
@@ -136,18 +140,6 @@ sub roles
 
 	return @{$self->{'roles'}};
 }
-
-=for comment
-
-sub stringify
-{
-	my $self = shift;
-
-	return $self->{'user'};
-}
-
-=cut
-
 
 =head1 SEE ALSO
 
@@ -167,8 +159,8 @@ Copyright (c) 2008 PuzzWorks OHG, L<http://puzzworks.com/>
 
 =head1 LICENSE
 
-This library is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself.
+This library is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself.
 
 =cut
 
