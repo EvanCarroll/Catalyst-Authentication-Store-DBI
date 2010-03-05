@@ -78,7 +78,6 @@ sub BUILDARGS {
 sub get_object { +shift->user }
 sub obj { +shift->user }
 
-
 1;
 
 __END__
