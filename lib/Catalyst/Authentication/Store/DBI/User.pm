@@ -1,111 +1,38 @@
 package Catalyst::Authentication::Store::DBI::User;
 use strict;
 use warnings;
-use base 'Catalyst::Authentication::User';
 
-=head1 NAME
+use Moose;
+extends 'Catalyst::Authentication::User';
 
-Catalyst::Authentication::Store::DBI::User - User object representing a
-database record
+has 'store' => (
+	isa => 'Str'
+	, is => 'ro'
+	, required => 1
+);
 
-=head1 DESCRIPTION
+has 'user' => (
+	isa => 'HashRef'
+	, is => 'ro'
+	, reader => 'get_object'
+	, required => 1
+	, traits => ['Hash']
+	, handles => { 'get' => 'get' }
+);
 
-This class represents users found in the database and implements methods to
-access the contained information.
-
-=head1 METHODS
-
-=head2 new
-
-=cut
-
-sub new
-{
-	my ($class, $store, $user) = @_;
-
-	unless ($user) {
-		return undef;
-	}
-
-	my $self = {
-		'store'	=> $store,
-		'user'	=> $user,
-	};
-
-	bless($self, $class);
-
-	return $self;
-}
-
-=head2 id
-
-=cut
-
-sub id
-{
+sub id {
 	my $self = shift;
-
 	my $user_key = $self->{'store'}{'user_key'};
-
 	return $self->{'user'}{$user_key};
 }
 
+
 # sub supports is implemented by the base class, so supported_features is enough
-
-=head2 supported_features
-
-=cut
-
-sub supported_features
-{
-	my $self = shift;
-
-	return {
-		'session'	=> 1,
-		'roles'		=> 1,
-	};
+sub supported_features {
+	return { 'session' => 1, 'roles' => 1 };
 }
 
-=head2 get
-
-=cut
-
-sub get
-{
-	my ($self, $fieldname) = @_;
-
-	unless (exists($self->{'user'}{$fieldname})) {
-		return undef;
-	}
-
-	return $self->{'user'}{$fieldname};
-}
-
-=head2 get_object
-
-This method returns the actual contents of the user, i.e. the hashref.
-
-=head2 obj
-
-Method alias to get_object for your convenience.
-
-=cut
-
-sub get_object
-{
-	my $self = shift;
-
-	return $self->{'user'};
-}
-
-*obj = \&get_object;
-
-=head2 roles
-
-=cut
-
-sub roles
-{
+sub roles {
 	my $self = shift;
 
 	if (exists($self->{'roles'}) && ref($self->{'roles'}) eq 'ARRAY') {
@@ -141,6 +68,54 @@ sub roles
 	return @{$self->{'roles'}};
 }
 
+sub BUILDARGS {
+	my $class = shift;
+	my ( $store, $user ) = @_;
+	
+	scalar @_ == 1
+		? $class->SUPER::BUILDARGS(@_)
+		: { store => $store, user => $user }
+	;
+
+}
+
+*obj = \&get_object;
+
+
+1;
+
+__END__
+
+=head1 NAME
+
+Catalyst::Authentication::Store::DBI::User - User object representing a
+database record
+
+=head1 DESCRIPTION
+
+This class represents users found in the database and implements methods to
+access the contained information.
+
+=head1 METHODS
+
+=head2 new
+
+=head2 id
+
+=head2 supported_features
+
+=head2 get
+
+=head2 get_object
+
+This method returns the actual contents of the user, i.e. the hashref.
+
+=head2 obj
+
+Method alias to get_object for your convenience.
+
+=head2 roles
+
 =head1 SEE ALSO
 
 =over 4
@@ -163,5 +138,3 @@ This library is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 
 =cut
-
-1;
