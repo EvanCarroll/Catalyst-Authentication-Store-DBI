@@ -5,19 +5,51 @@ use warnings;
 use Moose;
 extends 'Catalyst::Authentication::User';
 
-has 'store' => (
-	isa => 'Str'
-	, is => 'ro'
-	, required => 1
-);
+has 'store' => ( isa => 'HashRef' , is => 'ro' , required => 1 );
 
 has 'user' => (
 	isa => 'HashRef'
 	, is => 'ro'
-	, reader => 'get_object'
 	, required => 1
 	, traits => ['Hash']
 	, handles => { 'get' => 'get' }
+);
+
+has 'roles' => (
+	isa  => 'ArrayRef'
+	, is => 'ro'
+	, default => sub {
+		my $self = shift;
+		my $store = $self->store;
+		my $dbh   = $store->{'dbh'};
+		my ( $sth, $role );
+		
+		my @field = (
+			'role_table', 'role_name',
+			'role_table',
+			'user_role_table',
+			'user_role_table', 'user_role_role_key',
+			'role_table', 'role_key',
+			'user_role_table', 'user_role_user_key',
+		);
+
+		my $sql = sprintf('SELECT %s.%s FROM %s' .
+				' INNER JOIN %s ON %s.%s = %s.%s WHERE %s.%s = ?',
+				map { $dbh->quote_identifier($store->{$_}) } @field);
+
+		$sth = $dbh->prepare($sql) or die($dbh->errstr());
+
+		$sth->execute( $self->get($store->{'user_key'}) ) or
+				die( $dbh->errstr() );
+		$sth->bind_columns(\$role) or die($dbh->errstr());
+
+		while ($sth->fetch()) {
+			push(@{$self->{'roles'}}, $role);
+		}
+		$sth->finish();
+
+		return @{$self->{'roles'}};
+	}
 );
 
 sub id {
@@ -32,42 +64,6 @@ sub supported_features {
 	return { 'session' => 1, 'roles' => 1 };
 }
 
-sub roles {
-	my $self = shift;
-
-	if (exists($self->{'roles'}) && ref($self->{'roles'}) eq 'ARRAY') {
-		return @{$self->{'roles'}};
-	}
-
-	my $store = $self->{'store'};
-	my $dbh = $store->{'dbh'};
-	my $sth;
-	my $role;
-	my @field = (
-		'role_table', 'role_name',
-		'role_table',
-		'user_role_table',
-		'user_role_table', 'user_role_role_key',
-		'role_table', 'role_key',
-		'user_role_table', 'user_role_user_key',
-	);
-
-	my $sql = sprintf('SELECT %s.%s FROM %s' .
-	    ' INNER JOIN %s ON %s.%s = %s.%s WHERE %s.%s = ?',
-	    map { $dbh->quote_identifier($store->{$_}) } @field);
-
-	$sth = $dbh->prepare($sql) or die($dbh->errstr());
-	$sth->execute($self->{'user'}{$store->{'user_key'}}) or
-	    die($dbh->errstr());
-	$sth->bind_columns(\$role) or die($dbh->errstr());
-	while ($sth->fetch()) {
-		push(@{$self->{'roles'}}, $role);
-	}
-	$sth->finish();
-
-	return @{$self->{'roles'}};
-}
-
 sub BUILDARGS {
 	my $class = shift;
 	my ( $store, $user ) = @_;
@@ -79,7 +75,8 @@ sub BUILDARGS {
 
 }
 
-*obj = \&get_object;
+sub get_object { +shift->user }
+sub obj { +shift->user }
 
 
 1;
