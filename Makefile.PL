@@ -1,15 +1,22 @@
-use 5.005;
-use ExtUtils::MakeMaker;
+use inc::Module::Install;
 
-WriteMakefile(
-	'NAME'		=> 'Catalyst::Authentication::Store::DBI',
-	'LICENSE'	=> 'perl',
-	'VERSION_FROM'	=> 'lib/Catalyst/Authentication/Store/DBI.pm',
-	'PREREQ_PM'	=> {
-		'Catalyst::Plugin::Authentication'	=> 0,
-		'Catalyst::Model::DBI'			=> 0,
-	},
-	'ABSTRACT_FROM'	=> 'lib/Catalyst/Authentication/Store/DBI.pm',
-	'AUTHOR'	=> 'Simon Bertrang <simon.bertrang@puzzworks.com>',
+name     'Catalyst-Authentication-Store-DBI';
+all_from 'lib/Catalyst/Authentication/Store/DBI.pm';
+author   q{Evan Carroll <me@evancarroll.com>};
+license  'perl';
+
+build_requires 'Test::More';
+
+requires 'Catalyst::Plugin::Authentication';
+requires 'Catalyst::Model::DBI';
+requires 'Moose' => 0.98;
+
+resources(
+	'homepage'     => 'http://www.evancarroll.com/'
+	, 'repository' => 'git://github.com/EvanCarroll/Catalyst-Authentication-Store-DBI.git'
 );
 
+
+auto_install;
+
+WriteAll;
