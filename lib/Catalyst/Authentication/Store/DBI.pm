@@ -9,12 +9,6 @@ our $VERSION = '0.01';
 
 has 'config' => ( isa => 'HashRef', is => 'ro', required => 1 );
 
-sub BUILDARGS {
-	my $class = shift;
-	my ( $config, $app, $realm ) = @_;
-	{ config => $config, app => $app, realm => $realm }
-}
-
 # locates a user using data contained in the hashref
 sub find_user {
 	my ($self, $authinfo, $c) = @_;
@@ -95,6 +89,17 @@ sub from_session {
 sub user_supports {
 	my $self = shift;
 	return;
+}
+
+sub BUILDARGS {
+	my $class = shift;
+	my ( $config, $app, $realm ) = @_;
+	
+	scalar @_ == 1
+		? $class->SUPER::BUILDARGS(@_)
+		: { config => $config, app => $app, realm => $realm }
+	;
+
 }
 
 1;
