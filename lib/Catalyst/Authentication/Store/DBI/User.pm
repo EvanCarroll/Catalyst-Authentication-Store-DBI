@@ -15,6 +15,7 @@ has 'user' => (
 	, handles => { 'get' => 'get' }
 );
 
+## Currently requires user-role to be joined on single key
 has 'roles' => (
 	isa  => 'ArrayRef'
 	, is => 'ro'
