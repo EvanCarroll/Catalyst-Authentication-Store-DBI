@@ -19,7 +19,7 @@ sub find_user {
 	my @col = map { $_ } sort keys %$authinfo;
 
 	my $sql =
-		'SELECT * FROM ' . $self->config->{'user_table'}
+		'SELECT * FROM ' . $dbh->quote_identifier( $self->config->{'user_table'} )
 		. ' WHERE ' .	join( ' AND ', map "$_ = ?", @col )
 	;
 
@@ -55,11 +55,11 @@ sub from_session {
 
 	my $sql = sprintf(
 		'SELECT * FROM %s WHERE %s = ?'
-		, $self->config->{'user_table'}
-		, $self->config->{'user_key'}
+		, $dbh->quote_identifier( $self->config->{'user_table'} )
+		, $dbh->quote_identifier( $self->config->{'user_key'}   )
 	);
 
-	my $sth = $dbh->prepare($sql) or die($dbh->errstr());
+	my $sth = $dbh->prepare_cached($sql) or die($dbh->errstr());
 	$sth->execute($frozen) or die($dbh->errstr());
 
 	my %user;

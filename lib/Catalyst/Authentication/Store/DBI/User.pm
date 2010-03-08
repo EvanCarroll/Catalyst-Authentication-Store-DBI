@@ -34,11 +34,12 @@ has 'roles' => (
 			'user_role_table', 'user_role_user_key',
 		);
 
-		my $sql = sprintf('SELECT %s.%s FROM %s' .
-				' INNER JOIN %s ON %s.%s = %s.%s WHERE %s.%s = ?',
-				map { $dbh->quote_identifier($store->config->{$_}) } @field);
+		my $sql = sprintf(
+			'SELECT %s.%s FROM %s INNER JOIN %s ON %s.%s = %s.%s WHERE %s.%s = ?'
+			, map { $dbh->quote_identifier($store->config->{$_}) } @field
+		);
 
-		$sth = $dbh->prepare($sql) or die($dbh->errstr());
+		$sth = $dbh->prepare_cached($sql) or die($dbh->errstr());
 
 		$sth->execute( $self->get($store->config->{'user_key'}) ) or
 				die( $dbh->errstr() );
