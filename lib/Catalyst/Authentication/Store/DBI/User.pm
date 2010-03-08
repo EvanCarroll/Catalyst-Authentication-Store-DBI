@@ -21,9 +21,8 @@ has 'roles' => (
 	, is => 'ro'
 	, default => sub {
 		my $self = shift;
-		my $store = $self->store;
-		my $dbh   = $store->config->{'dbh'};
-		my ( $sth, $role );
+		#my $dbh = $c->model('DBI')->dbh;
+		my $dbh   = $self->store->config->{'dbh'};
 		
 		my @field = (
 			'role_table', 'role_name',
@@ -36,12 +35,13 @@ has 'roles' => (
 
 		my $sql = sprintf(
 			'SELECT %s.%s FROM %s INNER JOIN %s ON %s.%s = %s.%s WHERE %s.%s = ?'
-			, map { $dbh->quote_identifier($store->config->{$_}) } @field
+			, map { $dbh->quote_identifier($self->store->config->{$_}) } @field
 		);
 
-		$sth = $dbh->prepare_cached($sql) or die($dbh->errstr());
+		my $sth = $dbh->prepare_cached($sql) or die($dbh->errstr());
 
-		$sth->execute( $self->get($store->config->{'user_key'}) ) or
+		my $role;
+		$sth->execute( $self->get($self->store->config->{'user_key'}) ) or
 				die( $dbh->errstr() );
 		$sth->bind_columns(\$role) or die($dbh->errstr());
 		
@@ -61,11 +61,8 @@ sub id {
 	return $self->get($user_key);
 }
 
-
 # sub supports is implemented by the base class, so supported_features is enough
-sub supported_features {
-	return { 'session' => 1, 'roles' => 1 };
-}
+sub supported_features { +{ session => 1, roles => 1 } }
 
 sub BUILDARGS {
 	my $class = shift;
@@ -105,7 +102,11 @@ access the contained information.
 
 =head2 get
 
+I<DEPRECATED> use C<user> instead
+
 =head2 get_object
+
+I<DEPRECATED> use C<user> instead
 
 This method returns the actual contents of the user, i.e. the hashref.
 
