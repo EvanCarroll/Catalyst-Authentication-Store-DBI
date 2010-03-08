@@ -21,7 +21,7 @@ has 'roles' => (
 	, default => sub {
 		my $self = shift;
 		my $store = $self->store;
-		my $dbh   = $store->{'dbh'};
+		my $dbh   = $store->config->{'dbh'};
 		my ( $sth, $role );
 		
 		my @field = (
@@ -35,27 +35,28 @@ has 'roles' => (
 
 		my $sql = sprintf('SELECT %s.%s FROM %s' .
 				' INNER JOIN %s ON %s.%s = %s.%s WHERE %s.%s = ?',
-				map { $dbh->quote_identifier($store->{$_}) } @field);
+				map { $dbh->quote_identifier($store->config->{$_}) } @field);
 
 		$sth = $dbh->prepare($sql) or die($dbh->errstr());
 
-		$sth->execute( $self->get($store->{'user_key'}) ) or
+		$sth->execute( $self->get($store->config->{'user_key'}) ) or
 				die( $dbh->errstr() );
 		$sth->bind_columns(\$role) or die($dbh->errstr());
-
+		
+		my @roles;
 		while ($sth->fetch()) {
-			push(@{$self->{'roles'}}, $role);
+			push @roles, $role;
 		}
 		$sth->finish();
 
-		return @{$self->{'roles'}};
+		return \@roles;
 	}
 );
 
 sub id {
 	my $self = shift;
-	my $user_key = $self->{'store'}{'user_key'};
-	return $self->{'user'}{$user_key};
+	my $user_key = $self->store->config->{'user_key'};
+	return $self->get($user_key);
 }
 
 
