@@ -1,0 +1,7 @@
+Roles:
+* Add tests for ROLEs
+* Add ROLE lookup on custom information (like find_user)
+
+from_session:
+* Permit custom info like the find_user stuff
+
