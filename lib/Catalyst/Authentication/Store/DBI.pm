@@ -1,9 +1,105 @@
 package Catalyst::Authentication::Store::DBI;
 use strict;
 use warnings;
+
+use Moose;
 use Catalyst::Authentication::Store::DBI::User;
 
 our $VERSION = '0.01';
+
+has 'config' => ( isa => 'HashRef', is => 'ro', required => 1 );
+
+sub BUILDARGS {
+	my $class = shift;
+	my ( $config, $app, $realm ) = @_;
+	{ config => $config, app => $app, realm => $realm }
+}
+
+# locates a user using data contained in the hashref
+sub find_user {
+	my ($self, $authinfo, $c) = @_;
+	my $sql;
+	my $sth;
+	my %user;
+
+	unless ($self->config->{'dbh'}) {
+		$self->config->{'dbh'} = $c->model('DBI')->dbh();
+	}
+
+	my $dbh = $self->config->{'dbh'};
+
+	my @col = map { $_ } sort(keys(%$authinfo));
+
+	$sql = 'SELECT * FROM ' . $self->config->{'user_table'} . ' WHERE ' .
+	    join(' AND ', map { $_ . ' = ?' } @col);
+
+	$sth = $dbh->prepare($sql) or die($dbh->errstr());
+	$sth->execute(@$authinfo{@col}) or die($dbh->errstr());
+	$sth->bind_columns(\( @user{ @{ $sth->{'NAME_lc'} } } )) or
+	    die($dbh->errstr());
+	unless ($sth->fetch()) {
+		$sth->finish();
+		return undef;
+	}
+	$sth->finish();
+
+	## Fail silently clause
+	return undef
+		unless exists $user{$self->config->{'user_key'}}
+		&& length $user{$self->config->{'user_key'}}
+	;
+
+	return Catalyst::Authentication::Store::DBI::User->new( {store=> $self, user => \%user} );
+}
+
+sub for_session {
+	my ($self, $c, $user) = @_;
+	return $user->id();
+}
+
+sub from_session {
+	my ($self, $c, $frozen) = @_;
+	my $sql;
+	my $sth;
+	my %user;
+
+	unless ($self->config->{'dbh'}) {
+		$self->config->{'dbh'} = $c->model('DBI')->dbh();
+	}
+
+	my $dbh = $self->config->{'dbh'};
+
+	$sql = 'SELECT * FROM ' . $self->config->{'user_table'} . ' WHERE ' .
+	    $self->config->{'user_key'} . ' = ?';
+
+	$sth = $dbh->prepare($sql) or die($dbh->errstr());
+	$sth->execute($frozen) or die($dbh->errstr());
+	$sth->bind_columns(\( @user{ @{ $sth->{'NAME_lc'} } } )) or
+	    die($dbh->errstr());
+	unless ($sth->fetch()) {
+		$sth->finish();
+		return undef;
+	}
+	$sth->finish();
+
+	## Fail silently clause
+	return undef
+		unless exists $user{$self->config->{'user_key'}}
+		&& length $user{$self->config->{'user_key'}}
+	;
+
+	return Catalyst::Authentication::Store::DBI::User->new( {store=> $self, user => \%user} );
+
+}
+
+sub user_supports {
+	my $self = shift;
+	return;
+}
+
+1;
+
+__END__
 
 =head1 NAME
 
@@ -80,126 +176,13 @@ provides support for L<Catalyst::Plugin::Authorization::Roles>.
 
 =head2 new
 
-=cut
-
-# instantiates the store object
-sub new
-{
-	my ($class, $config, $app, $realm) = @_;
-
-	unless (defined($config) && ref($config) eq 'HASH') {
-		Catalyst::Exception->throw(__PACKAGE__ .
-		    ' needs a hashref for configuration');
-	}
-
-	my $self = {%$config};
-
-	bless($self, $class);
-
-	return $self;
-}
-
 =head2 find_user
-
-=cut
-
-# locates a user using data contained in the hashref
-sub find_user
-{
-	my ($self, $authinfo, $c) = @_;
-	my $sql;
-	my $sth;
-	my %user;
-
-	unless ($self->{'dbh'}) {
-		$self->{'dbh'} = $c->model('DBI')->dbh();
-	}
-
-	my $dbh = $self->{'dbh'};
-
-	my @col = map { $_ } sort(keys(%$authinfo));
-
-	$sql = 'SELECT * FROM ' . $self->{'user_table'} . ' WHERE ' .
-	    join(' AND ', map { $_ . ' = ?' } @col);
-
-	$sth = $dbh->prepare($sql) or die($dbh->errstr());
-	$sth->execute(@$authinfo{@col}) or die($dbh->errstr());
-	$sth->bind_columns(\( @user{ @{ $sth->{'NAME_lc'} } } )) or
-	    die($dbh->errstr());
-	unless ($sth->fetch()) {
-		$sth->finish();
-		return undef;
-	}
-	$sth->finish();
-
-	unless (exists($user{$self->{'user_key'}}) &&
-	    length($user{$self->{'user_key'}})) {
-		return undef;
-	}
-
-	return Catalyst::Authentication::Store::DBI::User->new($self, \%user);
-}
 
 =head2 for_session
 
-=cut
-
-sub for_session
-{
-	my ($self, $c, $user) = @_;
-
-	return $user->id();
-}
-
 =head2 from_session
 
-=cut
-
-sub from_session
-{
-	my ($self, $c, $frozen) = @_;
-	my $sql;
-	my $sth;
-	my %user;
-
-	unless ($self->{'dbh'}) {
-		$self->{'dbh'} = $c->model('DBI')->dbh();
-	}
-
-	my $dbh = $self->{'dbh'};
-
-	$sql = 'SELECT * FROM ' . $self->{'user_table'} . ' WHERE ' .
-	    $self->{'user_key'} . ' = ?';
-
-	$sth = $dbh->prepare($sql) or die($dbh->errstr());
-	$sth->execute($frozen) or die($dbh->errstr());
-	$sth->bind_columns(\( @user{ @{ $sth->{'NAME_lc'} } } )) or
-	    die($dbh->errstr());
-	unless ($sth->fetch()) {
-		$sth->finish();
-		return undef;
-	}
-	$sth->finish();
-
-	unless (exists($user{$self->{'user_key'}}) &&
-	    length($user{$self->{'user_key'}})) {
-		return undef;
-	}
-
-	return Catalyst::Authentication::Store::DBI::User->new($self, \%user);
-
-}
-
 =head2 user_supports
-
-=cut
-
-sub user_supports
-{
-	my $self = shift;
-
-	return;
-}
 
 =head1 SEE ALSO
 
@@ -228,4 +211,3 @@ the same terms as Perl itself.
 
 =cut
 
-1;
