@@ -9,28 +9,26 @@ our $VERSION = '0.01';
 
 has 'config' => ( isa => 'HashRef', is => 'ro', required => 1 );
 
-# locates a user using data contained in the hashref
+# locates a user using data contained in the hashref, this is rather awkward
+# and inconsistant with the rest of the module-design which is only provides
+# selectivity on user_key
 sub find_user {
 	my ($self, $authinfo, $c) = @_;
-	my $sql;
-	my $sth;
-	my %user;
+	my $dbh = $c->model('DBI')->dbh;
 
-	unless ($self->config->{'dbh'}) {
-		$self->config->{'dbh'} = $c->model('DBI')->dbh();
-	}
+	my @col = map { $_ } sort keys %$authinfo;
 
-	my $dbh = $self->config->{'dbh'};
+	my $sql =
+		'SELECT * FROM ' . $self->config->{'user_table'}
+		. ' WHERE ' .	join( ' AND ', map "$_ = ?", @col )
+	;
 
-	my @col = map { $_ } sort(keys(%$authinfo));
-
-	$sql = 'SELECT * FROM ' . $self->config->{'user_table'} . ' WHERE ' .
-	    join(' AND ', map { $_ . ' = ?' } @col);
-
-	$sth = $dbh->prepare($sql) or die($dbh->errstr());
+	my $sth = $dbh->prepare($sql) or die($dbh->errstr());
 	$sth->execute(@$authinfo{@col}) or die($dbh->errstr());
+
+	my %user;
 	$sth->bind_columns(\( @user{ @{ $sth->{'NAME_lc'} } } )) or
-	    die($dbh->errstr());
+	die($dbh->errstr());
 	unless ($sth->fetch()) {
 		$sth->finish();
 		return undef;
@@ -48,28 +46,25 @@ sub find_user {
 
 sub for_session {
 	my ($self, $c, $user) = @_;
-	return $user->id();
+	return $user->id;
 }
 
 sub from_session {
 	my ($self, $c, $frozen) = @_;
-	my $sql;
-	my $sth;
-	my %user;
+	my $dbh = $c->model('DBI')->dbh;
 
-	unless ($self->config->{'dbh'}) {
-		$self->config->{'dbh'} = $c->model('DBI')->dbh();
-	}
+	my $sql = sprintf(
+		'SELECT * FROM %s WHERE %s = ?'
+		, $self->config->{'user_table'}
+		, $self->config->{'user_key'}
+	);
 
-	my $dbh = $self->config->{'dbh'};
-
-	$sql = 'SELECT * FROM ' . $self->config->{'user_table'} . ' WHERE ' .
-	    $self->config->{'user_key'} . ' = ?';
-
-	$sth = $dbh->prepare($sql) or die($dbh->errstr());
+	my $sth = $dbh->prepare($sql) or die($dbh->errstr());
 	$sth->execute($frozen) or die($dbh->errstr());
+
+	my %user;
 	$sth->bind_columns(\( @user{ @{ $sth->{'NAME_lc'} } } )) or
-	    die($dbh->errstr());
+	die($dbh->errstr());
 	unless ($sth->fetch()) {
 		$sth->finish();
 		return undef;
@@ -94,7 +89,7 @@ sub user_supports {
 sub BUILDARGS {
 	my $class = shift;
 	my ( $config, $app, $realm ) = @_;
-	
+
 	scalar @_ == 1
 		? $class->SUPER::BUILDARGS(@_)
 		: { config => $config, app => $app, realm => $realm }
@@ -215,4 +210,3 @@ This library is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 
 =cut
-
