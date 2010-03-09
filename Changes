@@ -1,7 +1,10 @@
 0.02 
     - Full Moosification
     - Added missing quote_identifiers
-    - Removed the redundant retreive code for user retrieval in from_session
+    - Removed the redundant retreive code for user retrieval in from_session, now we call find_user here
+    - Made the user class subclassable á la DBIC
+    - Made the store work with composite keys by serializing the initial auth_info clause
+    - Added a ton of docs
 
 0.01 Sun Nov 23 04:18:03 CET 2008
     - apply knf
