@@ -1,3 +1,5 @@
+Ideally, this would make sense of pkid/uid stuff. If the user can be reduced to a single index lookup, we should optimize to use that too.
+
 Roles:
 * Add tests for ROLEs
 * Roles should defer to store for role lookup
