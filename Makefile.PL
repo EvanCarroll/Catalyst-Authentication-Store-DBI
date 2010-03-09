@@ -8,6 +8,7 @@ license  'perl';
 build_requires 'Test::More';
 
 requires 'Catalyst::Plugin::Authentication';
+requires 'MooseX::Types::LoadableClass';
 requires 'Catalyst::Model::DBI';
 requires 'Storable';
 requires 'Moose' => 0.98;
