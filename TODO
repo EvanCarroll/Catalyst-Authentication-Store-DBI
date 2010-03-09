@@ -1,7 +1,14 @@
 Roles:
 * Add tests for ROLEs
+* Roles should defer to store for role lookup
 * Add ROLE lookup on custom information (like find_user)
-
-from_session:
+sub from_session:
 * Permit custom info like the find_user stuff
 
+* Schema qualification
+* Use a real serialization so the session doens't require a hit to the DB
+
+Statements of direction:
+* Store should do all database interaction
+* User can /defer/ to store, but not access database
+* User class needs to be customizable like DBIx::Class
