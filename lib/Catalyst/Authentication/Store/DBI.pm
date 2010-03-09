@@ -1,19 +1,30 @@
 package Catalyst::Authentication::Store::DBI;
 use strict;
 use warnings;
+use namespace::autoclean;
 
+use Storable;
 use Moose;
-use Catalyst::Authentication::Store::DBI::User;
+use MooseX::Types::LoadableClass qw/ClassName/;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 has 'config' => ( isa => 'HashRef', is => 'ro', required => 1 );
+has 'store_user_class' => (
+	is => 'ro'
+	, isa => ClassName
+	, lazy => 1
+	, coerce => 1
+	, default => sub {
+		my $self = shift;
+		defined $self->config->{'store_user_class'} 
+			? $self->config->{'store_user_class'}
+			: 'Catalyst::Authentication::Store::DBI::User'
+		;
+	}
+);
 
-#has 'dbi' => ( isa => 'Object', is => 'ro', default => sub { } );
-
-# locates a user using data contained in the hashref, this is rather awkward
-# and inconsistant with the rest of the module-design which is only provides
-# selectivity on user_key
+# locates a user using data contained in the hashref
 sub find_user {
 	my ($self, $authinfo, $c) = @_;
 	my $dbh = $c->model('DBI')->dbh;
@@ -22,7 +33,7 @@ sub find_user {
 
 	my $sql =
 		'SELECT * FROM ' . $dbh->quote_identifier( $self->config->{'user_table'} )
-		. ' WHERE ' .	join( ' AND ', map "$_ = ?", @col )
+		. ' WHERE ' .	join( ' AND ', map $dbh->quote_identifier($_) . " = ?", @col )
 	;
 
 	my $sth = $dbh->prepare($sql) or die($dbh->errstr());
@@ -43,56 +54,37 @@ sub find_user {
 		&& length $user{$self->config->{'user_key'}}
 	;
 
-	return Catalyst::Authentication::Store::DBI::User->new({
+	my $class = $self->store_user_class;
+	return $class->new({
 		store  => $self
 		, user => \%user
-		, authinfo => $authinfo
+		, authinfo  => $authinfo
+		, dbi_model => $c->model('DBI')
 	});
 }
 
-sub find_user_roles {
-	my $self = shift;
-	my ( $authinfo ) = @_;
-	#my $dbh = $c->model('DBI')->dbh;
-	my $dbh   = $self->store->config->{'dbh'};
-	
-	my @field = (
-		'role_table', 'role_name',
-		'role_table',
-		'user_role_table',
-		'user_role_table', 'user_role_role_key',
-		'role_table', 'role_key',
-		'user_role_table', 'user_role_user_key',
-	);
 
-	my @col = map { $_ } sort keys %$authinfo;
-	my $sql = sprintf(
-		'SELECT %s.%s FROM %s '
-		. 'INNER JOIN %s ON %s.%s = %s.%s '
-		. 'WHERE %s.%s = ?'
-		. join( ' AND ', map "$_ = ?", @col )
-		, map { $dbh->quote_identifier($self->store->config->{$_}) } @field
-	);
-
-	my $sth = $dbh->prepare_cached($sql) or die($dbh->errstr());
-
-	my $role;
-	$sth->execute(@$authinfo{@col}) or die($dbh->errstr());
-	$sth->bind_columns(\$role) or die($dbh->errstr());
-	
-	my @roles;
-	while ($sth->fetch()) {
-		push @roles, $role;
-	}
-	$sth->finish();
-
-	return \@roles;
-}
-
-use Storable;
+## Not sure how for_session would work with ACCEPT_CONTEXT in the Model::DBI
+## If you don't have the same context in the DBI you could presumably get a
+## different user
 sub for_session {
-	my ($self, $c, $user) = @_;
-	Storable::nfreeze( $user->authinfo );
+	my $self = shift;
+	my ( $c, $user) = @_;
+
+	## TODO: Freeze whole user, this should just be fallback
+	if (
+		exists $self->config->{user_key}
+		&& $user->get( $self->config->{user_key} )
+	) {
+		my $k = $self->config->{user_key};
+		my $uid = $user->get( $k );
+		return Storable::nfreeze({ $k => $uid });
+	}
+	## Support users with composite key
+	else {
+		return Storable::nfreeze( $user->authinfo );
+	}
+
 }
 
 sub from_session {
@@ -102,7 +94,6 @@ sub from_session {
 }
 
 sub user_supports {
-	my $self = shift;
 	return;
 }
 
@@ -128,61 +119,59 @@ Authentication using DBI
 
 =head1 SYNOPSIS
 
-  use Catalyst qw(Authentication);
+use Catalyst qw(Authentication);
 
-  __PACKAGE__->config->{'authentication'} = {
-    'default_realm' => 'default',
-    'realms' => {
-      'default' => {
-        'credential' => {
-          'class'               => 'Password',
-          'password_field'      => 'password',
-          'password_type'       => 'hashed',
-          'password_hash_type'  => 'SHA-1',
-        },
-        'store' => {
-          'class'              => 'DBI',
-          'user_table'         => 'login',
-          'user_key'           => 'id',
-          'user_name'          => 'name',
-          'role_table'         => 'authority',
-          'role_key'           => 'id',
-          'role_name'          => 'name',
-          'user_role_table'    => 'competence',
-          'user_role_user_key' => 'login',
-          'user_role_role_key' => 'authority',
-        },
-      },
-    },
-  };
+	__PACKAGE__->config->{'authentication'} = {
+		default_realm => 'default'
+		, realms => {
+			default => {
+				credential => {
+					class                 => 'Password'
+					, password_field      => 'password'
+					, password_type       => 'hashed'
+					, password_hash_type  => 'SHA-1'
+				}
+				store => {
+					class                => 'DBI'
+					, user_table         => 'login'
+					, user_key           => 'id'
+					, user_name          => 'name'
+					, role_table         => 'authority'
+					, role_key           => 'id'
+					, role_name          => 'name'
+					, user_role_table    => 'competence'
+					, user_role_user_key => 'login'
+					, user_role_role_key => 'authority'
+				},
+			},
+		},
+	};
 
-  sub login :Global
-  {
-    my ($self, $c) = @_;
-    my $req = $c->request();
+	sub login :Global {
+		my ($self, $c) = @_;
+		my $req = $c->request();
 
-    # catch login failures
-    unless ($c->authenticate({
-      'name'     => $req->param('name'),
-      'password' => $req->param('password'),
-      })) {
-      ...
-    }
+		# catch login failures
+		unless ($c->authenticate({
+			'name'       => $req->param('name')
+			, 'password' => $req->param('password')
+		})) {
+		...
+		}
 
-    ...
-  }
+		...
+	}
 
-  sub something :Path
-  {
-    my ($self, $c) = @_;
+	sub something :Path {
+		my ($self, $c) = @_;
 
-    # handle missing role case
-    unless ($c->check_user_roles('editor')) {
-      ...
-    }
+		# handle missing role case
+		unless ($c->check_user_roles('editor')) {
+		...
+	}
 
-    ...
-  }
+...
+}
 
 =head1 DESCRIPTION
 
@@ -191,6 +180,28 @@ L<Catalyst::Model::DBI>.
 
 It uses DBI to let your application authenticate users against a database and it
 provides support for L<Catalyst::Plugin::Authorization::Roles>.
+
+=head2 CONFIG
+
+The store is fully capable of dealing with more complex schemas by utilizing the where condition in C<find_user>. Now, if your role schema is different from the below diagram then simply subclass L<Catalyst::Authentication::Store::User> and set C<store_user_class> in the config. Currently, this is probably the most likely reason to subclass the User.
+
+The C<authenticate> method takes a hash ref that will be used to serialize and unserialize the user if there is no single L<user_key>. Composite keys are not currently supported in L<user_key>
+
+=head3 The default database configuration
+
+This module was created for the following configuration:
+
+	role_table            user_role_table
+	===================   ===================
+	role_id | role_name   role_id | user_id
+	-------------------   -------------------
+	0       | role        0       | 1      
+
+	user_table
+	===================
+	user_id | user_name
+	-------------------
+	0       | Evan "The Man" Carroll
 
 =head1 METHODS
 
@@ -206,7 +217,11 @@ Will find all role's with the provided information (same input as find_user)
 
 =head2 for_session
 
+This does not truely serialize a user from the session. If there is a L<user_key> in the config it saves that users value to a hash; otherwise, it saves the entire authinfo condition from the call to authenticate.
+
 =head2 from_session
+
+Will either find_user based on the L<user_key>, or L<auth_info>
 
 =head2 user_supports
 
@@ -225,6 +240,7 @@ Will find all role's with the provided information (same input as find_user)
 =head1 AUTHOR
 
 Evan Carroll, E<lt>cpan@evancarroll.comE<gt>
+
 (v.01) Simon Bertrang, E<lt>simon.bertrang@puzzworks.comE<gt>
 
 =head1 COPYRIGHT
