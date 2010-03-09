@@ -15,7 +15,7 @@ BEGIN {
 		require Test::WWW::Mechanize::Catalyst;
 	} or plan skip_all => $@;
 
-	plan tests => 8;
+	plan tests => 9;
 
 	unless (exists($ENV{'TESTAPP_DB_FILE'})) {
 		$ENV{'TESTAPP_DB_FILE'} = "$FindBin::Bin/test.db";
@@ -52,7 +52,13 @@ BEGIN {
 		},
 	};
 
-	$ENV{'TESTAPP_PLUGINS'} = [ qw(Authentication Session Session::Store::File Session::State::Cookie) ];
+	$ENV{'TESTAPP_PLUGINS'} = [ qw(
+		Authentication
+		Session
+		Session::Store::File
+		Session::State::Cookie
+		Authorization::Roles
+	) ];
 }
 
 use SetupDB;
@@ -73,6 +79,11 @@ my $m = Test::WWW::Mechanize::Catalyst->new();
 	$m->content_is('joe logged in', 'user logged in');
 }
 
+#role test
+{
+	$m->get_ok('http://localhost/getroles', 'request ok');
+}
+
 # test logout
 {
 	$m->get_ok('http://localhost/dologout', 'request ok');
@@ -84,3 +95,4 @@ my $m = Test::WWW::Mechanize::Catalyst->new();
 	$m->get_ok('http://localhost/dologout', 'request ok');
 	$m->content_is('not logged out', 'logged out already');
 }
+

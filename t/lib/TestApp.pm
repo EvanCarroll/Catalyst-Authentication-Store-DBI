@@ -70,4 +70,11 @@ sub dologout :Local
 	}
 }
 
+sub getroles :Local
+{
+	my ($self, $c) = @_;
+	$c->assert_user_roles( qw/admin/ );
+	return 1;
+}
+
 1;
