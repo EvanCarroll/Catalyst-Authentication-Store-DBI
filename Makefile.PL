@@ -9,6 +9,7 @@ build_requires 'Test::More';
 
 requires 'Catalyst::Plugin::Authentication';
 requires 'Catalyst::Model::DBI';
+requires 'Storable';
 requires 'Moose' => 0.98;
 
 resources(
