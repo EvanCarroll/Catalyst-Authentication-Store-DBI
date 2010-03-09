@@ -9,6 +9,8 @@ our $VERSION = '0.01';
 
 has 'config' => ( isa => 'HashRef', is => 'ro', required => 1 );
 
+#has 'dbi' => ( isa => 'Object', is => 'ro', default => sub { } );
+
 # locates a user using data contained in the hashref, this is rather awkward
 # and inconsistant with the rest of the module-design which is only provides
 # selectivity on user_key
@@ -41,44 +43,62 @@ sub find_user {
 		&& length $user{$self->config->{'user_key'}}
 	;
 
-	return Catalyst::Authentication::Store::DBI::User->new( {store=> $self, user => \%user} );
+	return Catalyst::Authentication::Store::DBI::User->new({
+		store  => $self
+		, user => \%user
+		, authinfo => $authinfo
+	});
 }
 
-sub for_session {
-	my ($self, $c, $user) = @_;
-	return $user->id;
-}
+sub find_user_roles {
+	my $self = shift;
+	my ( $authinfo ) = @_;
+	#my $dbh = $c->model('DBI')->dbh;
+	my $dbh   = $self->store->config->{'dbh'};
+	
+	my @field = (
+		'role_table', 'role_name',
+		'role_table',
+		'user_role_table',
+		'user_role_table', 'user_role_role_key',
+		'role_table', 'role_key',
+		'user_role_table', 'user_role_user_key',
+	);
 
-sub from_session {
-	my ($self, $c, $frozen) = @_;
-	my $dbh = $c->model('DBI')->dbh;
-
+	my @col = map { $_ } sort keys %$authinfo;
 	my $sql = sprintf(
-		'SELECT * FROM %s WHERE %s = ?'
-		, $dbh->quote_identifier( $self->config->{'user_table'} )
-		, $dbh->quote_identifier( $self->config->{'user_key'}   )
+		'SELECT %s.%s FROM %s '
+		. 'INNER JOIN %s ON %s.%s = %s.%s '
+		. 'WHERE %s.%s = ?'
+		. join( ' AND ', map "$_ = ?", @col )
+		, map { $dbh->quote_identifier($self->store->config->{$_}) } @field
 	);
 
 	my $sth = $dbh->prepare_cached($sql) or die($dbh->errstr());
-	$sth->execute($frozen) or die($dbh->errstr());
 
-	my %user;
-	$sth->bind_columns(\( @user{ @{ $sth->{'NAME_lc'} } } )) or
-	die($dbh->errstr());
-	unless ($sth->fetch()) {
-		$sth->finish();
-		return undef;
+	my $role;
+	$sth->execute(@$authinfo{@col}) or die($dbh->errstr());
+	$sth->bind_columns(\$role) or die($dbh->errstr());
+	
+	my @roles;
+	while ($sth->fetch()) {
+		push @roles, $role;
 	}
 	$sth->finish();
 
-	## Fail silently clause
-	return undef
-		unless exists $user{$self->config->{'user_key'}}
-		&& length $user{$self->config->{'user_key'}}
-	;
+	return \@roles;
+}
 
-	return Catalyst::Authentication::Store::DBI::User->new( {store=> $self, user => \%user} );
+use Storable;
+sub for_session {
+	my ($self, $c, $user) = @_;
+	Storable::nfreeze( $user->authinfo );
+}
 
+sub from_session {
+	my $self = shift;
+	my ( $c, $frozen ) = @_;
+	$self->find_user( Storable::thaw($frozen), $c );
 }
 
 sub user_supports {
@@ -178,6 +198,12 @@ provides support for L<Catalyst::Plugin::Authorization::Roles>.
 
 =head2 find_user
 
+Will find a user with provided information
+
+=head2 find_user_roles
+
+Will find all role's with the provided information (same input as find_user)
+
 =head2 for_session
 
 =head2 from_session
@@ -198,7 +224,8 @@ provides support for L<Catalyst::Plugin::Authorization::Roles>.
 
 =head1 AUTHOR
 
-Simon Bertrang, E<lt>simon.bertrang@puzzworks.comE<gt>
+Evan Carroll, E<lt>cpan@evancarroll.comE<gt>
+(v.01) Simon Bertrang, E<lt>simon.bertrang@puzzworks.comE<gt>
 
 =head1 COPYRIGHT
 

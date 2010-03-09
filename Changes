@@ -1,5 +1,7 @@
 0.02 
-    - Moosified
+    - Full Moosification
+    - Added missing quote_identifiers
+    - Removed the redundant retreive code for user retrieval in from_session
 
 0.01 Sun Nov 23 04:18:03 CET 2008
     - apply knf
