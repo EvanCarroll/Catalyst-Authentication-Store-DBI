@@ -7,14 +7,14 @@ use Storable;
 use Moose;
 use MooseX::Types::LoadableClass qw/ClassName/;
 
-our $VERSION = '0.02';
+our $VERSION = '0.02_01';
 
 has 'config' => ( isa => 'HashRef', is => 'ro', required => 1 );
 has 'store_user_class' => (
-	is => 'ro'
-	, isa => ClassName
-	, lazy => 1
-	, coerce => 1
+	isa  => ClassName
+	, is => 'ro'
+	, coerce  => 1
+	, lazy    => 1
 	, default => sub {
 		my $self = shift;
 		defined $self->config->{'store_user_class'} 
@@ -211,17 +211,13 @@ This module was created for the following configuration:
 
 Will find a user with provided information
 
-=head2 find_user_roles
-
-Will find all role's with the provided information (same input as find_user)
-
 =head2 for_session
 
 This does not truely serialize a user from the session. If there is a L<user_key> in the config it saves that users value to a hash; otherwise, it saves the entire authinfo condition from the call to authenticate.
 
 =head2 from_session
 
-Will either find_user based on the L<user_key>, or L<auth_info>
+Will either C<find_user> based on the C<user_key>, or C<auth_info> provided to C<authenticate>
 
 =head2 user_supports
 
@@ -251,5 +247,3 @@ Copyright (c) 2008 PuzzWorks OHG, L<http://puzzworks.com/>
 
 This library is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
-
-=cut

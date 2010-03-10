@@ -1,9 +1,11 @@
 0.02 
     - Full Moosification
     - Added missing quote_identifiers
-    - Removed the redundant retreive code for user retrieval in from_session, now we call find_user here
+		- Removed the redundant retreive code for user retrieval in from_session, now we call find_user here
     - Made the user class subclassable á la DBIC
     - Made the store work with composite keys by serializing the initial auth_info clause
+    - Added tests for roles t/20_session.t
+    - find_user will now fall back to auth_info, but maintains user_key if it is set in conf
     - Added a ton of docs
 
 0.01 Sun Nov 23 04:18:03 CET 2008
