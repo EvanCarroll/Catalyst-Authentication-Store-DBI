@@ -70,10 +70,25 @@ sub dologout :Local
 	}
 }
 
-sub getroles :Local
+sub rolecheck :Local
 {
 	my ($self, $c) = @_;
-	$c->assert_user_roles( qw/admin/ );
+	my $p   = $c->req->params;
+	my $res = $c->res;
+
+	if (
+		$c->check_user_roles( $p->{role} )
+	) {
+		$res->body(
+			sprintf ( "%s is in role %s", $c->user->get('name'), $p->{role} )
+		);
+	}
+	else {
+		$res->body(
+			sprintf ( "%s is not in role %s", $c->user->get('name'), $p->{role} )
+		);
+	}
+
 }
 
 1;

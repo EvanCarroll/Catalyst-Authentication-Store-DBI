@@ -15,7 +15,7 @@ BEGIN {
 		require Test::WWW::Mechanize::Catalyst;
 	} or plan skip_all => $@;
 
-	plan tests => 9;
+	plan tests => 12;
 
 	unless (exists($ENV{'TESTAPP_DB_FILE'})) {
 		$ENV{'TESTAPP_DB_FILE'} = "$FindBin::Bin/test.db";
@@ -81,7 +81,14 @@ my $m = Test::WWW::Mechanize::Catalyst->new();
 
 #role test
 {
-	$m->get_ok('http://localhost/getroles', 'request ok');
+	$m->get_ok('http://localhost/rolecheck?role=admin', 'request ok');
+	$m->content_is('joe is in role admin', 'member role ok');
+}
+
+#role test unsuccessfull
+{
+	$m->get_ok('http://localhost/rolecheck?role=foobar', 'request ok');
+	$m->content_is('joe is not in role foobar', 'random role ok');
 }
 
 # test logout
