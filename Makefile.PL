@@ -1,7 +1,7 @@
 use inc::Module::Install;
 
 name     'Catalyst-Authentication-Store-DBI-ButMaintained';
-all_from 'lib/Catalyst/Authentication/Store/DBI.pm';
+all_from 'lib/Catalyst/Authentication/Store/DBI/ButMaintained.pm';
 author   q{Evan Carroll <me@evancarroll.com>};
 license  'perl';
 
