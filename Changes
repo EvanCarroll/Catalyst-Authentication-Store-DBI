@@ -1,4 +1,5 @@
-0.02 
+0.02_01
+    - Moved into ::ButMaintained for control
     - Full Moosification
     - Added missing quote_identifiers
 		- Removed the redundant retreive code for user retrieval in from_session, now we call find_user here

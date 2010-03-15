@@ -1,0 +1,6 @@
+/t/test.db
+*.swp
+/Makefile
+/*.tar.gz
+/MANIFEST.bak
+/inc/

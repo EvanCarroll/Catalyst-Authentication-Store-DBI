@@ -1,8 +1,20 @@
 Changes
+inc/Module/AutoInstall.pm
+inc/Module/Install.pm
+inc/Module/Install/AutoInstall.pm
+inc/Module/Install/Base.pm
+inc/Module/Install/Can.pm
+inc/Module/Install/Fetch.pm
+inc/Module/Install/Include.pm
+inc/Module/Install/Makefile.pm
+inc/Module/Install/Metadata.pm
+inc/Module/Install/Win32.pm
+inc/Module/Install/WriteAll.pm
 lib/Catalyst/Authentication/Store/DBI.pm
 lib/Catalyst/Authentication/Store/DBI/User.pm
 Makefile.PL
 MANIFEST
+META.yml			Module meta-data (added by MakeMaker)
 README
 t/00_load.t
 t/10_auth.t
@@ -12,4 +24,5 @@ t/95_pod-coverage.t
 t/lib/SetupDB.pm
 t/lib/TestApp.pm
 t/lib/TestApp/Model/DBI.pm
-META.yml                                 Module meta-data (added by MakeMaker)
+t/test.db
+TODO

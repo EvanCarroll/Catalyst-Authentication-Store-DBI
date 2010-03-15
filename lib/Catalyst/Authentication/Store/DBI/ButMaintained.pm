@@ -1,4 +1,4 @@
-package Catalyst::Authentication::Store::DBI;
+package Catalyst::Authentication::Store::DBI::ButMaintained;
 use strict;
 use warnings;
 use namespace::autoclean;
@@ -19,7 +19,7 @@ has 'store_user_class' => (
 		my $self = shift;
 		defined $self->config->{'store_user_class'} 
 			? $self->config->{'store_user_class'}
-			: 'Catalyst::Authentication::Store::DBI::User'
+			: 'Catalyst::Authentication::Store::DBI::ButMaintained::User'
 		;
 	}
 );
@@ -114,8 +114,7 @@ __END__
 
 =head1 NAME
 
-Catalyst::Authentication::Store::DBI - Storage class for Catalyst
-Authentication using DBI
+Catalyst::Authentication::Store::DBI::ButMaintained - Storage class for Catalyst Authentication using DBI
 
 =head1 SYNOPSIS
 
@@ -132,7 +131,7 @@ use Catalyst qw(Authentication);
 					, password_hash_type  => 'SHA-1'
 				}
 				store => {
-					class                => 'DBI'
+					class                => 'DBI::ButMaintained'
 					, user_table         => 'login'
 					, user_key           => 'id'
 					, user_name          => 'name'
@@ -175,15 +174,19 @@ use Catalyst qw(Authentication);
 
 =head1 DESCRIPTION
 
-This module implements the L<Catalyst::Authentication> API using
-L<Catalyst::Model::DBI>.
+This module implements the L<Catalyst::Authentication> API using L<Catalyst::Model::DBI>.
 
-It uses DBI to let your application authenticate users against a database and it
-provides support for L<Catalyst::Plugin::Authorization::Roles>.
+It uses DBI to let your application authenticate users against a database and it provides support for L<Catalyst::Plugin::Authorization::Roles>.  
+
+=head2 History
+
+This module started off as a patch to L<Catalyst::Authentication::Store::DBI>. I was unable to get ahold of the author, JANUS after he had said that he was willing to cede maintainership. This combined with my inability to provide support on official catalyst mediums -- I credit (mst) Matthew Trout's desire to instigate matters when someone is trying to provide a patch -- leads me to fork.
+
+You can get official support on this module in on irc.freenode.net's #perlcafe.
 
 =head2 CONFIG
 
-The store is fully capable of dealing with more complex schemas by utilizing the where condition in C<find_user>. Now, if your role schema is different from the below diagram then simply subclass L<Catalyst::Authentication::Store::User> and set C<store_user_class> in the config. Currently, this is probably the most likely reason to subclass the User.
+The store is fully capable of dealing with more complex schemas by utilizing the where condition in C<find_user>. Now, if your role schema is different from the below diagram then simply subclass L<Catalyst::Authentication::Store::DBI::ButMaintained::User> and set C<store_user_class> in the config. Currently, this is probably the most likely reason to subclass the User.
 
 The C<authenticate> method takes a hash ref that will be used to serialize and unserialize the user if there is no single L<user_key>. Composite keys are not currently supported in L<user_key>
 
@@ -241,6 +244,7 @@ Evan Carroll, E<lt>cpan@evancarroll.comE<gt>
 
 =head1 COPYRIGHT
 
+Copyright (c) 2010 Evan Carroll, L<http://www.evancarroll.com/>
 Copyright (c) 2008 PuzzWorks OHG, L<http://puzzworks.com/>
 
 =head1 LICENSE

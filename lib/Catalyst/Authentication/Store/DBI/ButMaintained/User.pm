@@ -1,4 +1,4 @@
-package Catalyst::Authentication::Store::DBI::User;
+package Catalyst::Authentication::Store::DBI::ButMaintained::User;
 use strict;
 use warnings;
 use namespace::autoclean;
@@ -86,6 +86,8 @@ sub BUILDARGS {
 
 }
 
+
+## These are used in the base class for defaults
 ## Deprecated
 sub get_object { +shift->user }
 ## Deprecated
@@ -97,12 +99,11 @@ __END__
 
 =head1 NAME
 
-Catalyst::Authentication::Store::DBI::User - User object representing a database record
+Catalyst::Authentication::Store::DBI::ButMaintained::User - User object representing a database record
 
 =head1 DESCRIPTION
 
-This class represents users found in the database and implements methods to
-access the contained information.
+This class represents users found in the database and implements methods to access the contained information.
 
 =head1 METHODS
 
@@ -154,7 +155,7 @@ I<DEPRECATED> use C<user> instead
 
 =over 4
 
-=item L<Catalyst::Authentication::Store::DBI>
+=item L<Catalyst::Authentication::Store::DBI::ButMaintained>
 
 =back
 
@@ -166,11 +167,10 @@ Evan Carroll E<lt>cpan@evancarroll.comE<gt>
 
 =head1 COPYRIGHT
 
+Copyright (c) 2010 Evan Carroll, L<http://www.evancarroll.com/>
 Copyright (c) 2008 PuzzWorks OHG, L<http://puzzworks.com/>
 
 =head1 LICENSE
 
 This library is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
-
-=cut
