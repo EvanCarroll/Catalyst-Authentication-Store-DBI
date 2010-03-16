@@ -10,11 +10,12 @@ inc/Module/Install/Makefile.pm
 inc/Module/Install/Metadata.pm
 inc/Module/Install/Win32.pm
 inc/Module/Install/WriteAll.pm
-lib/Catalyst/Authentication/Store/DBI.pm
-lib/Catalyst/Authentication/Store/DBI/User.pm
+lib/Catalyst/Authentication/Store/DBI/ButMaintained.pm
+lib/Catalyst/Authentication/Store/DBI/ButMaintained/FoolCPAN.pm
+lib/Catalyst/Authentication/Store/DBI/ButMaintained/User.pm
 Makefile.PL
-MANIFEST
-META.yml			Module meta-data (added by MakeMaker)
+MANIFEST			This list of files
+META.yml
 README
 t/00_load.t
 t/10_auth.t
@@ -24,5 +25,4 @@ t/95_pod-coverage.t
 t/lib/SetupDB.pm
 t/lib/TestApp.pm
 t/lib/TestApp/Model/DBI.pm
-t/test.db
 TODO
