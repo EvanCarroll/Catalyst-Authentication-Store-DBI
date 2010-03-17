@@ -7,9 +7,18 @@ use Storable;
 use Moose;
 use MooseX::Types::LoadableClass qw/ClassName/;
 
-our $VERSION = '0.02_02';
+our $VERSION = '0.02_03';
 
-has 'config' => ( isa => 'HashRef', is => 'ro', required => 1 );
+has 'config' => (
+	isa  => 'HashRef'
+	, is => 'ro'
+	, required => 1
+	, traits => ['Hash']
+	, handles => {
+		get_config => 'get'
+	}
+);
+
 has 'store_user_class' => (
 	isa  => ClassName
 	, is => 'ro'
@@ -17,8 +26,8 @@ has 'store_user_class' => (
 	, lazy    => 1
 	, default => sub {
 		my $self = shift;
-		defined $self->config->{'store_user_class'} 
-			? $self->config->{'store_user_class'}
+		defined $self->get_config('store_user_class')
+			? $self->get_config('store_user_class')
 			: 'Catalyst::Authentication::Store::DBI::ButMaintained::User'
 		;
 	}
@@ -31,9 +40,13 @@ sub find_user {
 
 	my @col = map { $_ } sort keys %$authinfo;
 
-	my $sql =
-		'SELECT * FROM ' . $dbh->quote_identifier( $self->config->{'user_table'} )
-		. ' WHERE ' .	join( ' AND ', map $dbh->quote_identifier($_) . " = ?", @col )
+	my $abs_user_dest = $self->_safe_escape(
+		$dbh
+		, {map { $_ => $self->get_config("user_$_") } qw/database schema table/}
+	);
+
+	my $sql = "SELECT * FROM $abs_user_dest WHERE "
+			.	join( ' AND ', map $dbh->quote_identifier($_) . " = ?", @col )
 	;
 
 	my $sth = $dbh->prepare($sql) or die($dbh->errstr());
@@ -50,8 +63,8 @@ sub find_user {
 
 	## Fail silently clause
 	return undef
-		unless exists $user{$self->config->{'user_key'}}
-		&& length $user{$self->config->{'user_key'}}
+		unless exists $user{$self->get_config('user_key')}
+		&& length $user{$self->get_config('user_key')}
 	;
 
 	my $class = $self->store_user_class;
@@ -61,6 +74,19 @@ sub find_user {
 		, authinfo  => $authinfo
 		, dbi_model => $c->model('DBI')
 	});
+
+}
+
+sub _safe_escape {
+	my $self = shift;
+	my ( $dbh, $unescaped ) = @_;
+
+	join '.'
+		, map $dbh->quote_identifier( $unescaped->{$_} )
+			, grep exists $unescaped->{$_} && defined $unescaped->{$_}
+				, qw/database schema table column/
+	;
+
 }
 
 
@@ -74,9 +100,9 @@ sub for_session {
 	## TODO: Freeze whole user, this should just be fallback
 	if (
 		exists $self->config->{user_key}
-		&& $user->get( $self->config->{user_key} )
+		&& $user->get( $self->get_config('user_key') )
 	) {
-		my $k = $self->config->{user_key};
+		my $k = $self->get_config('user_key');
 		my $uid = $user->get( $k );
 		return Storable::nfreeze({ $k => $uid });
 	}
@@ -132,9 +158,12 @@ use Catalyst qw(Authentication);
 				}
 				store => {
 					class                => 'DBI::ButMaintained'
+					, user_schema        => 'authentication' # Not required
 					, user_table         => 'login'
 					, user_key           => 'id'
 					, user_name          => 'name'
+
+					## Role stuff is not needed if you want to subclass or not use roles
 					, role_table         => 'authority'
 					, role_key           => 'id'
 					, role_name          => 'name'
@@ -176,7 +205,7 @@ use Catalyst qw(Authentication);
 
 This module implements the L<Catalyst::Authentication> API using L<Catalyst::Model::DBI>.
 
-It uses DBI to let your application authenticate users against a database and it provides support for L<Catalyst::Plugin::Authorization::Roles>.  
+It uses DBI to let your application authenticate users against a database and it provides support for L<Catalyst::Plugin::Authorization::Roles>.
 
 =head2 History
 
@@ -184,7 +213,7 @@ This module started off as a patch to L<Catalyst::Authentication::Store::DBI>. I
 
 You can get official support on this module in on irc.freenode.net's #perlcafe.
 
-=head2 CONFIG
+=head2 Config
 
 The store is fully capable of dealing with more complex schemas by utilizing the where condition in C<find_user>. Now, if your role schema is different from the below diagram then simply subclass L<Catalyst::Authentication::Store::DBI::ButMaintained::User> and set C<store_user_class> in the config. Currently, this is probably the most likely reason to subclass the User.
 
@@ -198,7 +227,7 @@ This module was created for the following configuration:
 	===================   ===================
 	role_id | role_name   role_id | user_id
 	-------------------   -------------------
-	0       | role        0       | 1      
+	0       | role        0       | 1
 
 	user_table
 	===================
@@ -223,6 +252,14 @@ This does not truely serialize a user from the session. If there is a L<user_key
 Will either C<find_user> based on the C<user_key>, or C<auth_info> provided to C<authenticate>
 
 =head2 user_supports
+
+=head2 get_config( $scalar )
+
+Accessor used for getting to the authentication modules configuration as set in the Catalyst config.
+
+=head2 _safe_escape
+
+Internal method only: takes a copy of $dbh, and a hash with keys of B<database>, B<schema>, B<table> and B<column> and escapes all that is provided joining them on a period for use in prepaired statements.
 
 =head1 SEE ALSO
 

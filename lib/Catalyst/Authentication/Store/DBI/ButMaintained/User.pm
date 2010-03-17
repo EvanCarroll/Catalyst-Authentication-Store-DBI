@@ -6,7 +6,12 @@ use namespace::autoclean;
 use Moose;
 extends 'Catalyst::Authentication::User';
 
-has 'store' => ( isa => 'HashRef' , is => 'ro' , required => 1 );
+has 'store' => (
+	isa => 'HashRef'
+	, is => 'ro'
+	, required => 1
+	, handles => [qw/get_config _safe_escape/]
+);
 
 has 'authinfo' => ( isa => 'HashRef', is => 'ro', required => 1 );
 
@@ -47,13 +52,13 @@ has 'roles' => (
 			'SELECT %s.%s FROM %s '
 			. 'INNER JOIN %s ON %s.%s = %s.%s '
 			. 'WHERE %s.%s = ?'
-			, map { $dbh->quote_identifier($self->store->config->{$_}) } @field
+			, map { $dbh->quote_identifier($self->get_config($_)) } @field
 		);
 
 		my $sth = $dbh->prepare_cached($sql) or die($dbh->errstr());
 
 		my $role;
-		$sth->execute( $self->get($self->store->config->{'user_key'}) )  or die($dbh->errstr());
+		$sth->execute( $self->get($self->get_config('user_key')) )  or die($dbh->errstr());
 		$sth->bind_columns(\$role) or die($dbh->errstr());
 
 		my @roles;
@@ -68,8 +73,7 @@ has 'roles' => (
 
 sub id {
 	my $self = shift;
-	my $user_key = $self->store->config->{'user_key'};
-	return $self->get($user_key);
+	return $self->get( $self->get_config('user_key') );
 }
 
 # sub supports is implemented by the base class, so supported_features is enough
@@ -78,7 +82,7 @@ sub supported_features { +{ session => 1, roles => 1 } }
 sub BUILDARGS {
 	my $class = shift;
 	my ( $store, $user ) = @_;
-	
+
 	scalar @_ == 1
 		? $class->SUPER::BUILDARGS(@_)
 		: { store => $store, user => $user }
@@ -115,7 +119,7 @@ This class represents users found in the database and implements methods to acce
 
 =item store
 
-Reference to the store.
+Internal reference to the store.
 
 =item user
 
