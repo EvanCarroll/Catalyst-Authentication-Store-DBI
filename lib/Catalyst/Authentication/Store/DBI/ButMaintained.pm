@@ -282,6 +282,7 @@ Evan Carroll, E<lt>cpan@evancarroll.comE<gt>
 =head1 COPYRIGHT
 
 Copyright (c) 2010 Evan Carroll, L<http://www.evancarroll.com/>
+
 Copyright (c) 2008 PuzzWorks OHG, L<http://puzzworks.com/>
 
 =head1 LICENSE
