@@ -38,7 +38,7 @@ sub find_user {
 	my ($self, $authinfo, $c) = @_;
 	my $dbh = $c->model('DBI')->dbh;
 
-	my @col = map { $_ } sort keys %$authinfo;
+	my @col = sort keys %$authinfo;
 
 	my $abs_user_dest = $self->_safe_escape(
 		$dbh
