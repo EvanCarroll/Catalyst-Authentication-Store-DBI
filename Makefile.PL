@@ -13,6 +13,8 @@ requires 'Catalyst::Model::DBI';
 requires 'Storable';
 requires 'Moose' => 0.98;
 
+recommends 'Catalyst::Plugin::Authorization::Roles';
+
 resources(
 	'homepage'     => 'http://www.evancarroll.com/'
 	, 'repository' => 'git://github.com/EvanCarroll/Catalyst-Authentication-Store-DBI.git'
