@@ -35,7 +35,7 @@ BEGIN {
 						'password_type'		=> 'clear',
 					},
 					'store'			=> {
-						'class'			=> 'DBI',
+						'class'			=> 'DBI::ButMaintained',
 						'user_table'		=> 'user',
 						'user_key'		=> 'id',
 						'user_name'		=> 'name',
