@@ -8,6 +8,7 @@ use lib "$FindBin::Bin/lib";
 BEGIN {
 	eval {
 		require Catalyst::Model::DBI;
+		require Catalyst::Plugin::Authorization::Roles;
 		require Catalyst::Plugin::Session;
 		require Catalyst::Plugin::Session::State::Cookie;
 		require Catalyst::Plugin::Session::Store::File;
