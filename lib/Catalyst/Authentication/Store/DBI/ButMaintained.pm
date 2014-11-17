@@ -7,7 +7,7 @@ use Storable;
 use Moose;
 use MooseX::Types::LoadableClass qw/ClassName/;
 
-our $VERSION = '0.01';
+our $VERSION = '0.03';
 
 has 'config' => (
 	isa  => 'HashRef'

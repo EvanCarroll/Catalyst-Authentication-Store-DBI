@@ -1,3 +1,6 @@
+0.03 2014-11-17
+	- Fixed a minor bug. Think Moose Handles forces the Type to be isa Object
+
 0.02_03
 	- Added support for user schema
 	- Added convience 'get_config' method for accessing app config in Store

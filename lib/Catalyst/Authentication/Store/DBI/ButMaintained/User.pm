@@ -7,7 +7,7 @@ use Moose;
 extends 'Catalyst::Authentication::User';
 
 has 'store' => (
-	isa => 'HashRef'
+	isa => 'Object'
 	, is => 'ro'
 	, required => 1
 	, handles => [qw/get_config _safe_escape/]
